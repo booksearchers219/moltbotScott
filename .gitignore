@@ -1,0 +1,31 @@
+# Secrets
+.env
+.env.*
+*.key
+*.pem
+*.token
+
+# Python
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Docker
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Audio / generated files
+*.wav
+*.mp3
+*.ogg
+
+# Local state
+loot/
+cache/
+
