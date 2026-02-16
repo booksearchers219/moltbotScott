@@ -103,7 +103,19 @@ def get_feed():
             timeout=10,
         )
         r.raise_for_status()
-        return r.json()
+        data = r.json()
+
+        # Harden feed validation
+        if not isinstance(data, dict):
+            print("⚠️ Feed returned non-dict response.")
+            return None
+
+        if "posts" not in data or not isinstance(data["posts"], list):
+            print("⚠️ Feed missing 'posts' list.")
+            return None
+
+        return data
+
     except Exception as e:
         print("⚠️ Feed error:", e)
         return None
@@ -150,7 +162,7 @@ while True:
 
     feed = get_feed()
 
-    if feed and "posts" in feed and feed["posts"]:
+    if feed:
         posts = feed["posts"]
         last_seen = state.get("last_seen_post_id")
 
@@ -176,10 +188,21 @@ while True:
                 print("   ID:", post_id)
                 print("   Author:", post.get("author"))
                 print("   Submolt:", post.get("submolt"))
-                print("   Title:", post.get("title"))
 
-                content = post.get("content", "")
-                preview = content[:200] + ("..." if len(content) > 200 else "")
+                # Harden title + content handling
+                title = post.get("title") or "[No Title]"
+                content = post.get("content")
+
+                if not isinstance(content, str):
+                    content = ""
+
+                preview = (
+                    content[:200] + ("..." if len(content) > 200 else "")
+                    if content
+                    else "[No text content]"
+                )
+
+                print("   Title:", title)
                 print("   Content Preview:", preview)
                 print("-" * 40)
 
@@ -197,7 +220,6 @@ while True:
                         state["comments_today"] += 1
                         save_state(state)
 
-                        # Recalculate cooldown
                         time_since_last = time.time() - state["last_comment_time"]
                         can_post = (
                             time_since_last >= COMMENT_COOLDOWN_SECONDS and
@@ -208,7 +230,7 @@ while True:
                 else:
                     print("🧪 DRY RUN or safety prevented posting.")
     else:
-        print("No posts available.")
+        print("⚠️ No posts available.")
 
     print(f"\n😴 Sleeping {HEARTBEAT_INTERVAL} seconds...")
     time.sleep(HEARTBEAT_INTERVAL)
