@@ -24,7 +24,7 @@ STATE_FILE = "scott_state.json"
 #COMMENT_COOLDOWN_SECONDS = 0
 COMMENT_COOLDOWN_SECONDS = 60 * 60 * 4
 MAX_COMMENTS_PER_DAY = 6
-DRY_RUN = False
+DRY_RUN = True
 HEARTBEAT_INTERVAL = 600
 SUBMOLTS_TO_SUBSCRIBE = ["security", "ai", "general"]
 # ====================
@@ -276,9 +276,27 @@ if feed:
 
         for post in unseen_posts:
             post_id = post.get("id")
+            author = post.get("author", {}).get("username", "unknown")
+            title = post.get("title", "")
+            content = post.get("content", "")
+            submolt = post.get("submolt", {}).get("slug", "unknown")
+            created = post.get("createdAt", "unknown")
 
-            print("\n📄 Processing post:")
-            print("   ID:", post_id)
+            print("\n" + "=" * 60)
+            print("📄 NEW POST DETECTED")
+            print("=" * 60)
+            print("🆔 ID:", post_id)
+            print("👤 Author:", author)
+            print("📚 Submolt:", submolt)
+            print("🕒 Created:", created)
+
+            if title:
+                print("\n📌 Title:")
+                print(title)
+
+            print("\n📝 Content:")
+            print(content)
+            print("=" * 60 + "\n")
 
             state["last_seen_post_id"] = post_id
             save_state(state)
@@ -290,19 +308,20 @@ if feed:
                 if result:
                     print("✅ Comment posted.")
 
-                    break                    
-
                     # AUTO VERIFY HERE
                     auto_verify_if_needed(result)
 
                     state["last_comment_time"] = time.time()
                     state["comments_today"] += 1
                     save_state(state)
+
+                    break
                 else:
                     print("⚠️ Comment failed.")
                     break
             else:
                 print("🧪 DRY RUN or safety prevented posting.")
+
 else:
     print("⚠️ No posts available.")
 
